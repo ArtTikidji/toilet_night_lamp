@@ -5,7 +5,7 @@
 #define PIN 8   // light control pin
 #define PIN_NUM 2 //count of leds
 
-const int statesCount = 3;
+const int statesCount = 4;
 
 /*
   current state of system:
@@ -20,15 +20,16 @@ int state = 0;
   in state 1 we have 255 brightness increesing with delay 100 mills
   in state 2 we one step with waiting to turn off light
 */
-unsigned long states_timers[statesCount] = {NULL, 100, 120000};
+unsigned long states_timers[statesCount] = {NULL, 100, 90000, 30000};
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIN_NUM, PIN, NEO_GRB + NEO_KHZ800);
 unsigned long start_turn_on;
 unsigned long statr_waiting;
+unsigned long start_checking;
 
 int brightness_increase(unsigned long current_time){
   int brightness = (current_time - start_turn_on)/states_timers[2];
   
-  if (brightness > 255) return 3;
+  if (brightness > 255) return 2;
   
   strip.setPixelColor(0, strip.Color(brightness, brightness, 0));
   strip.show();
@@ -56,16 +57,28 @@ void loop(){
     case 0:
       state = digitalRead(SENSOR_PIN);
       if (state == 1){
-        start_turn_on = millis();
+        start_turn_on = current_time;
         Serial.println("Somebody is in this area!");
       }
       break;
     case 1:
       state = brightness_increase(current_time);
-      if (state == 3){ statr_waiting = current_time;}
+      if (state == 2){ statr_waiting = current_time;}
+      break;
+    case 2:
+      if (current_time - statr_waiting > states_timers[2]) {
+        start_checking = current_time;
+        state = 3;
+      }
       break;
     case 3:
-      if (current_time - statr_waiting > states_timers[state]) {
+      int sensor_starus = digitalRead(SENSOR_PIN);
+      if (sensor_starus == 1){
+        state = 2;
+        statr_waiting = current_time;
+        break;
+      }
+      if(current_time - start_checking > states_timers[3]){
         turn_off_light();
         state = 0;
       }
