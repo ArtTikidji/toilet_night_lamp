@@ -12,6 +12,7 @@ const int statesCount = 4;
   0 -- waiting to turn light
   1 -- turning on light
   2 -- waiting to turn off light
+  3 -- checking sensor and keep illuminate if something detected
 */
 int state = 0;
 /*
