@@ -28,13 +28,14 @@ unsigned long statr_waiting;
 unsigned long start_checking;
 
 int brightness_increase(unsigned long current_time){
-  int brightness = (current_time - start_turn_on)/states_timers[2];
+  int brightness = (current_time - start_turn_on)/states_timers[1];
   
   if (brightness > 255) return 2;
   
   strip.setPixelColor(0, strip.Color(brightness, brightness, 0));
+  
   strip.show();
-  return 2;
+  return 1;
 }
 
 void turn_off_light(){
@@ -64,7 +65,9 @@ void loop(){
       break;
     case 1:
       state = brightness_increase(current_time);
-      if (state == 2){ statr_waiting = current_time;}
+      if (state == 2){ 
+        statr_waiting = current_time;
+      }
       break;
     case 2:
       if (current_time - statr_waiting > states_timers[2]) {
