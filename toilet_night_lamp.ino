@@ -5,6 +5,11 @@
 #define PIN 8   // light control pin
 #define PIN_NUM 2 //count of leds
 
+#define WAIT_FOR_SOMEONE 0
+#define INCREASE_BRIGHTNESS 1
+#define LIGHT_ON_WAIT 2
+#define TRY_OFF_LIGHT 3
+
 const int statesCount = 4;
 
 /*
@@ -14,7 +19,7 @@ const int statesCount = 4;
   2 -- waiting to turn off light
   3 -- checking sensor and keep illuminate if something detected
 */
-int state = 0;
+int state = WAIT_FOR_SOMEONE;
 /*
   time shifts between iterations in each state in mills
   in state 0 we just waiting for sensor activation, that's why states_timers[0] = NULL
@@ -29,13 +34,13 @@ unsigned long statr_waiting;
 unsigned long start_checking;
 
 int brightness_increase(unsigned long current_time){
-  int brightness = (current_time - start_turn_on)/states_timers[1];
+  int brightness = (current_time - start_turn_on)/states_timers[INCREASE_BRIGHTNESS];
   if (brightness > 255) {
-    return 2;
+    return LIGHT_ON_WAIT;
   }
   strip.setPixelColor(0, strip.Color(brightness, brightness, 0));
   strip.show();
-  return 1;
+  return INCREASE_BRIGHTNESS;
 }
 
 void turn_off_light(){
@@ -45,7 +50,7 @@ void turn_off_light(){
 
 int waiting_movment(unsigned long current_time){
   int result = digitalRead(SENSOR_PIN);
-  if (result == 1){
+  if (result == INCREASE_BRIGHTNESS){
     start_turn_on = current_time;
     Serial.println("Somebody is in this area!");
   }
@@ -54,7 +59,7 @@ int waiting_movment(unsigned long current_time){
 
 int smoothly_light_on(unsigned long current_time){
   int result = brightness_increase(current_time);
-  if (result == 2){ 
+  if (result == LIGHT_ON_WAIT){ 
     statr_waiting = current_time;
     Serial.println("Maximum rightness, start waiting!");
   }
@@ -62,26 +67,26 @@ int smoothly_light_on(unsigned long current_time){
 }
 
 int light_turned_on_wait(unsigned long current_time){
-  int result = 2;
-  if (current_time - statr_waiting > states_timers[2]) {
+  int result = LIGHT_ON_WAIT;
+  if (current_time - statr_waiting > states_timers[LIGHT_ON_WAIT]) {
     start_checking = current_time;
-    result = 3;
+    result = TRY_OFF_LIGHT;
     Serial.println("Time out, try to turn off light");
   }
   return result;
 }
 
 int trying_2_off_light(unsigned long current_time){
-  int result = 3;
+  int result = TRY_OFF_LIGHT;
   int sensor_starus = digitalRead(SENSOR_PIN);
   if (sensor_starus == 1){
-    result = 2;
+    result = LIGHT_ON_WAIT;
     statr_waiting = current_time;
     Serial.println("Somebody is in this area! Don't turn off light");
   }
-  if(current_time - start_checking > states_timers[3]){
+  if(current_time - start_checking > states_timers[TRY_OFF_LIGHT]){
     turn_off_light();
-    result = 0;
+    result = WAIT_FOR_SOMEONE;
     Serial.println("Turn off light");
   }
   return result; 
@@ -100,16 +105,16 @@ void setup(){
 void loop(){
   unsigned long current_time = millis();
   switch (state) {
-    case 0:
+    case WAIT_FOR_SOMEONE:
       state = waiting_movment(current_time);
       break;
-    case 1:
+    case INCREASE_BRIGHTNESS:
       state = smoothly_light_on(current_time);
       break;
-    case 2:
+    case LIGHT_ON_WAIT:
       state = light_turned_on_wait(current_time);
       break;
-    case 3:
+    case TRY_OFF_LIGHT:
       state = trying_2_off_light(current_time);
       break;
     default:
