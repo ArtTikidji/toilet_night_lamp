@@ -17,7 +17,7 @@ const int statesCount = 4;
  0 -- waiting to turn light
  1 -- turning on light
  2 -- waiting to turn off light
- 3 -- checking sensor and keep illuminate if something detected
+ 3 -- smoothly turn off light and checking sensor and keep illuminate if something detected
  */
 int state = WAIT_FOR_SOMEONE;
 
@@ -27,11 +27,11 @@ private:
     /*
      time shifts between iterations in each state in mills
      in state 0 we just waiting for sensor activation, that's why states_timers[0] = NULL
-     in state 1 we have 255 brightness increesing with delay 100 mills
+     in state 1 we have 170 brightness increesing with delay 100 mills
      in state 2 we one iteration with waiting long time
-     in state 3 we one iteration with checking sensor and turn off if time ends
+     in state 3 we have 170 brightness decreesing and checking sensor and keep illuminate if something detected
      */
-    const unsigned long states_timers[statesCount] = {NULL, 100, 2400, 100};
+    const unsigned long states_timers[statesCount] = {NULL, 100, 240000, 100};
     unsigned long states_starts[statesCount] = {NULL, 0, 0, 0};
     Adafruit_NeoPixel strip;
     const int brightness_shift = 75;
