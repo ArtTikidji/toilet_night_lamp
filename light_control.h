@@ -1,4 +1,3 @@
-
 #include <Adafruit_NeoPixel.h>
 #include <time.h>
 
@@ -42,7 +41,8 @@ private:
     
     int brightness_increase(){
         int brightness = (current_time - states_starts[INCREASE_BRIGHTNESS])/states_timers[INCREASE_BRIGHTNESS];
-        if (brightness > 255) {return LIGHT_ON_WAIT;}
+        if (brightness > 180) {return LIGHT_ON_WAIT;}
+        brightness += 75;
         strip.setPixelColor(0, strip.Color(brightness, brightness, 0));
         strip.show();
         return INCREASE_BRIGHTNESS;
