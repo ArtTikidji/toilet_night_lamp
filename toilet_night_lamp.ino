@@ -21,7 +21,7 @@ void loop(){
     case LIGHT_ON_WAIT:
       state = light_controler.light_turned_on_wait();
       break;
-    case TRY_OFF_LIGHT:
+    case DECREASE_BRIGHTNESS:
       state = light_controler.trying_2_off_light();
       break;
     default:
