@@ -48,7 +48,9 @@ private:
     }
     
     void set_brightness(int brightness){
-        strip.setPixelColor(0, strip.Color(brightness, brightness, 0));
+        for (int led_num = 0; led_num < PIN_NUM; ++led_num){
+            strip.setPixelColor(led_num, strip.Color(brightness, brightness, 0));
+        }
         strip.show();
     }
     
