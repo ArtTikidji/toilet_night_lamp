@@ -17,7 +17,7 @@ const int statesCount = 4;
  0 -- waiting to turn light
  1 -- turning on light
  2 -- waiting to turn off light
- 3 -- smoothly turn off light and checking sensor and keep illuminate if something detected
+ 3 -- checking sensor and keep illuminate if something detected
  */
 int state = WAIT_FOR_SOMEONE;
 
@@ -26,39 +26,53 @@ class Light_control{
 private:
     /*
      time shifts between iterations in each state in mills
-     in state 0 we just waiting for sensor activation, that's why states_timers[0] = NULL
-     in state 1 we have 170 brightness increesing with delay 100 mills
+     in state 0 we just waiting for sensor activation, that's why state_duration[0] = NULL
+     in state 1 we have 255 brightness increesing with delay 100 mills
      in state 2 we one iteration with waiting long time
-     in state 3 we have 170 brightness decreesing and checking sensor and keep illuminate if something detected
+     in state 3 we one iteration with checking sensor and turn off if time ends
      */
-    const unsigned long states_timers[statesCount] = {NULL, 100, 240000, 100};
+    const unsigned long state_duration[statesCount] = {NULL, 100, 240000, 100};
     unsigned long states_starts[statesCount] = {NULL, 0, 0, 0};
     Adafruit_NeoPixel strip;
     const int brightness_shift = 75;
+    const int maximum_brightness = 180; // 255 - brightness_shift - 10 (just in case)
     int brightness;
     unsigned long current_time;
     
-    int brightness_change(bool upDown){
-        int result = upDown ? INCREASE_BRIGHTNESS : DECREASE_BRIGHTNESS;
-        int change_val = (current_time - states_starts[result])/states_timers[result];
-        if (!(change_val >= 1)){
-            return result;
-        }
-        brightness += upDown ? change_val : -1 * change_val;
-        states_starts[result] = current_time;
-        int new_val = brightness + brightness_shift;
-        strip.setPixelColor(0, strip.Color(new_val, new_val, 0));
+    bool reached_maximum_brightness(int state, int brightness) {
+        return (state == INCREASE_BRIGHTNESS) and (brightness >= maximum_brightness);
+    }
+    
+    bool reached_minimum_brightness(int state, int brightness) {
+        return (state == DECREASE_BRIGHTNESS) and (brightness <= 0);
+    }
+    
+    void set_brightness(int brightness){
+        strip.setPixelColor(0, strip.Color(brightness, brightness, 0));
         strip.show();
-        if (upDown){
-            if (brightness > 170) { return LIGHT_ON_WAIT; }
-        } else {
-            if (brightness <= 0) {
-                strip.setPixelColor(0, strip.Color(0, 0, 0));
-                strip.show();
-                return WAIT_FOR_SOMEONE;
-            }
+    }
+    
+    /*
+     changing brightness if enough time passed
+     returns new status (can match with current status)
+     */
+    int brightness_change(){
+        int brightness_variation = (current_time - states_starts[state])/state_duration[state];
+        if (brightness_variation > 0){
+            brightness_variation *= state == DECREASE_BRIGHTNESS ? -1 : 1;
+            brightness += brightness_variation;
+            states_starts[state] = current_time;
+            set_brightness(brightness + brightness_shift);
         }
-        return result;
+        
+        if (reached_maximum_brightness(state, brightness)){
+            return LIGHT_ON_WAIT;
+        }
+        if (reached_minimum_brightness(state, brightness)){
+            set_brightness(0);
+            return WAIT_FOR_SOMEONE;
+        }
+        return state;
     }
     
 public:
@@ -70,41 +84,41 @@ public:
     void update_current_time(){ current_time = millis(); }
     
     int waiting_movment(){
-        int result = digitalRead(SENSOR_PIN);
-        if (result == INCREASE_BRIGHTNESS){
+        int new_state = digitalRead(SENSOR_PIN);
+        if (new_state == INCREASE_BRIGHTNESS){
             states_starts[INCREASE_BRIGHTNESS] = current_time;
             Serial.println("Somebody is in this area!");
         }
-        return result;
+        return new_state;
     }
     
     int smoothly_light_on(){
-        int result = brightness_change(true);
-        if (result == LIGHT_ON_WAIT){
+        int new_state = brightness_change();
+        if (new_state == LIGHT_ON_WAIT){
             states_starts[LIGHT_ON_WAIT] = current_time;
             Serial.println("Maximum brightness, start waiting!");
         }
-        return result;
+        return new_state;
     }
     
     int light_turned_on_wait(){
-        int result = LIGHT_ON_WAIT;
-        if (current_time - states_starts[LIGHT_ON_WAIT] > states_timers[LIGHT_ON_WAIT]) {
+        int new_state = LIGHT_ON_WAIT;
+        if (current_time - states_starts[LIGHT_ON_WAIT] > state_duration[LIGHT_ON_WAIT]) {
             states_starts[DECREASE_BRIGHTNESS] = current_time;
-            result = DECREASE_BRIGHTNESS;
+            new_state = DECREASE_BRIGHTNESS;
             Serial.println("Time out, try to turn off light");
         }
-        return result;
+        return new_state;
     }
     
     int trying_2_off_light(){
-        int result = brightness_change(false);
+        int new_state = brightness_change();
         int sensor_starus = digitalRead(SENSOR_PIN);
         if (sensor_starus == 1){
-            result = INCREASE_BRIGHTNESS;
+            new_state = INCREASE_BRIGHTNESS;
             states_starts[INCREASE_BRIGHTNESS] = current_time;
             Serial.println("Somebody is in this area! Don't turn off light");
         }
-        return result;
+        return new_state;
     }
 };
