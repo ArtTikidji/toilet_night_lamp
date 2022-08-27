@@ -11,22 +11,22 @@ void setup(){
 
 void loop(){
   light_controler.update_current_time();
-  switch (state) {
+  switch (light_controler.get_state()) {
     case WAIT_FOR_SOMEONE:
-      state = light_controler.waiting_movment();
+      light_controler.waiting_movment();
       break;
     case INCREASE_BRIGHTNESS:
-      state = light_controler.smoothly_light_on();
+      light_controler.smoothly_light_on();
       break;
     case LIGHT_ON_WAIT:
-      state = light_controler.light_turned_on_wait();
+      light_controler.light_turned_on_wait();
       break;
     case DECREASE_BRIGHTNESS:
-      state = light_controler.trying_2_off_light();
+      light_controler.trying_2_off_light();
       break;
     default:
       Serial.print("Something went wrong!\nUnknown system state: ");
-      Serial.println(state);
+      Serial.println(light_controler.get_state());
       break;
   }
 }

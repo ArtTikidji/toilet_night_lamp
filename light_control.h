@@ -15,18 +15,16 @@
 
 const int statesCount = 4;
 
-/*
- current state of system:
- 0 -- waiting to turn light
- 1 -- turning on light
- 2 -- waiting to turn off light
- 3 -- checking sensor and keep illuminate if something detected
- */
-int state = WAIT_FOR_SOMEONE;
-
-
 class Light_control{
 private:
+     /*
+     current state of system:
+     0 -- waiting to turn light
+     1 -- turning on light
+     2 -- waiting to turn off light
+     3 -- checking sensor and keep illuminate if something detected
+     */
+    int state = WAIT_FOR_SOMEONE;
     /*
      time shifts between iterations in each state in mills
      in state 0 we just waiting for sensor activation, that's why state_duration[0] = NULL
@@ -57,15 +55,13 @@ private:
 public:
     void setup_script();
     
+    int get_state();
     void update_current_time();
     
-    int waiting_movment();
-    
-    int smoothly_light_on();
-    
-    int light_turned_on_wait();
-    
-    int trying_2_off_light();
+    void waiting_movment();
+    void smoothly_light_on();
+    void light_turned_on_wait();
+    void trying_2_off_light();
 };
 
 #endif /* light_control_h */

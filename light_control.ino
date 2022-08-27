@@ -22,6 +22,8 @@ void Light_control::set_brightness(int brightness){
   strip.show();
 };
 
+int Light_control::get_state() { return state; };
+
 /*
   changing brightness if enough time passed
   returns new status (can match with current status)
@@ -50,37 +52,37 @@ void Light_control::setup_script(){
   strip.begin();
 }
     
-void Light_control::update_current_time(){ current_time = millis(); }
+void Light_control::update_current_time() { current_time = millis(); }
     
-int Light_control::waiting_movment(){
+void Light_control::waiting_movment(){
   int new_state = digitalRead(SENSOR_PIN);
   if (new_state == INCREASE_BRIGHTNESS){
     states_starts[INCREASE_BRIGHTNESS] = current_time;
     Serial.println("Somebody is in this area!");
   }
-  return new_state;
+  state = new_state;
 }
     
-int Light_control::smoothly_light_on(){
+void Light_control::smoothly_light_on(){
   int new_state = brightness_change();
   if (new_state == LIGHT_ON_WAIT){
     states_starts[LIGHT_ON_WAIT] = current_time;
     Serial.println("Maximum brightness, start waiting!");
   }
-  return new_state;
+  state = new_state;
 }
     
-int Light_control::light_turned_on_wait(){
+void Light_control::light_turned_on_wait(){
   int new_state = LIGHT_ON_WAIT;
   if (current_time - states_starts[LIGHT_ON_WAIT] > state_duration[LIGHT_ON_WAIT]) {
     states_starts[DECREASE_BRIGHTNESS] = current_time;
     new_state = DECREASE_BRIGHTNESS;
     Serial.println("Time out, try to turn off light");
   }
-  return new_state;
+  state = new_state;
 }
     
-int Light_control::trying_2_off_light(){
+void Light_control::trying_2_off_light(){
   int new_state = brightness_change();
   int sensor_starus = digitalRead(SENSOR_PIN);
   if (sensor_starus == 1){
@@ -88,5 +90,5 @@ int Light_control::trying_2_off_light(){
     states_starts[INCREASE_BRIGHTNESS] = current_time;
     Serial.println("Somebody is in this area! Don't turn off light");
   }
-  return new_state;
+  state = new_state;
 }
