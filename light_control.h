@@ -32,11 +32,11 @@ private:
      in state 2 we one iteration with waiting long time
      in state 3 we one iteration with checking sensor and turn off if time ends
      */
-    static const unsigned long state_duration[statesCount] = {NULL, 100, 240000, 100};
-    unsigned long states_starts[statesCount] = {NULL, 0, 0, 0};
+    const unsigned long state_duration[statesCount] = {0, 100, 240000, 100};
+    unsigned long states_starts[statesCount] = {0, 0, 0, 0};
     Adafruit_NeoPixel strip;
-    static const int brightness_shift = 75;
-    static const int maximum_brightness = 180; // 255 - brightness_shift - 10 (just in case)
+    const int brightness_shift = 75;
+    const int maximum_brightness = 180; // 255 - brightness_shift - 10 (just in case)
     int brightness;
     unsigned long current_time;
     
