@@ -8,10 +8,12 @@
 #define PIN 8   // light control pin
 #define PIN_NUM 2 //count of leds
 
-#define WAIT_FOR_SOMEONE 0
-#define INCREASE_BRIGHTNESS 1
-#define LIGHT_ON_WAIT 2
-#define DECREASE_BRIGHTNESS 3
+enum states{
+  WAIT_FOR_SOMEONE = 0,
+  INCREASE_BRIGHTNESS = 1,
+  LIGHT_ON_WAIT = 2,
+  DECREASE_BRIGHTNESS = 3,
+};
 
 const int statesCount = 4;
 
