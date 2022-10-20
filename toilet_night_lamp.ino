@@ -1,35 +1,32 @@
-#include <Adafruit_NeoPixel.h>
+#include "light_control.h"
 
-#define  sensorPin  6
-#define PIN 8   //led灯控制引脚
-#define PIN_NUM 2 //允许接的led灯的个数
+Light_control light_controler;
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel( PIN_NUM,PIN, NEO_GRB + NEO_KHZ800);
-
-int state;
-int r, g;
-void setup()
-{
-  pinMode(sensorPin, INPUT);
+void setup(){   
+  pinMode(SENSOR_PIN, INPUT);
   Serial.begin(9600);
-  strip.begin();
+  light_controler.setup_script();
 }
-void loop()
-{
-  state = digitalRead(sensorPin);
-  if (state == 1){
-    Serial.println("Somebody is in this area!");
-    for(r = 0; r < 255; r++){
-      g = r;
-      strip.setPixelColor(0, strip.Color(r, g, 0));//黄光
-      strip.show();
-      delay(100);
-    }
-    delay(120000);
-  }
-  else{
-  strip.setPixelColor(0, strip.Color(0, 0, 0));//灭
-  strip.show();
-  delay(500);
+
+
+void loop(){
+  light_controler.update_current_time();
+  switch (light_controler.get_state()) {
+    case WAIT_FOR_SOMEONE:
+      light_controler.waiting_movment();
+      break;
+    case INCREASE_BRIGHTNESS:
+      light_controler.smoothly_light_on();
+      break;
+    case LIGHT_ON_WAIT:
+      light_controler.light_turned_on_wait();
+      break;
+    case DECREASE_BRIGHTNESS:
+      light_controler.trying_2_off_light();
+      break;
+    default:
+      Serial.print("Something went wrong!\nUnknown system state: ");
+      Serial.println(light_controler.get_state());
+      break;
   }
 }
